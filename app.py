@@ -4,49 +4,79 @@ from google import genai
 from dotenv import load_dotenv
 import os
 
-# Load API Key
+# -------------------------
+# Load Gemini API Key
+# -------------------------
+
 load_dotenv()
 
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
-# App Title
-st.title("AI Interview Question Generator")
+# -------------------------
+# Page Config
+# -------------------------
 
-# Difficulty Selection
+st.set_page_config(
+    page_title="AI Interview Question Generator",
+    page_icon="🎯",
+    layout="wide"
+)
+
+# -------------------------
+# Title
+# -------------------------
+
+st.title("🎯 AI Interview Question Generator")
+st.write("Generate personalized interview questions from your resume using Gemini AI.")
+
+# -------------------------
+# User Inputs
+# -------------------------
+
 difficulty = st.selectbox(
-    "Select Difficulty",
+    "Select Difficulty Level",
     ["Easy", "Medium", "Hard"]
 )
 
-# Company Selection
 company = st.selectbox(
     "Target Company",
     [
-    "General",
-    "Google",
-    "Amazon",
-    "Microsoft",
-    "Goldman Sachs",
-    "Atlassian",
-    "Adobe",
-    "Uber",
-    "Flipkart"
-]
+        "General",
+        "Google",
+        "Amazon",
+        "Microsoft",
+        "Adobe",
+        "Atlassian",
+        "Goldman Sachs",
+        "Uber",
+        "Flipkart"
+    ]
 )
 
+num_questions = st.selectbox(
+    "Questions Per Category",
+    [3, 5, 7, 10]
+)
+
+# -------------------------
 # Resume Upload
+# -------------------------
+
 uploaded_file = st.file_uploader(
-    "Upload your Resume",
+    "Upload Your Resume (PDF)",
     type=["pdf"]
 )
 
+# -------------------------
+# Process Resume
+# -------------------------
+
 if uploaded_file:
 
-    st.success("Resume uploaded successfully!")
+    st.success("✅ Resume uploaded successfully!")
 
-    # Read PDF
     pdf = PdfReader(uploaded_file)
 
     text = ""
@@ -57,41 +87,45 @@ if uploaded_file:
         if page_text:
             text += page_text
 
-    # Show Resume Content
-    with st.expander("View Extracted Resume"):
+    with st.expander("📄 View Extracted Resume"):
         st.write(text)
 
-    # Generate Questions Button
-    if st.button("Generate Interview Questions"):
+    # -------------------------
+    # Generate Questions
+    # -------------------------
 
-        with st.spinner("Generating Questions..."):
+    if st.button("🚀 Generate Interview Questions"):
+
+        with st.spinner("Generating questions... Please wait."):
 
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=f"""
-You are an experienced interviewer.
-
-Generate {difficulty} level interview questions.
+You are an experienced technical interviewer.
 
 Target Company: {company}
 
-Based on the resume below generate:
+Difficulty Level: {difficulty}
+
+Generate {num_questions} interview questions for EACH category.
+
+Create the following sections:
 
 # HR Questions
-Generate 5 questions.
 
 # Technical Questions
-Generate 5 questions.
 
 # DSA Questions
-Generate 5 questions.
 
 # Project Questions
-Generate 5 questions.
 
-Make the questions specific to the resume.
+Requirements:
 
-Do not provide answers.
+- Questions should be based on the uploaded resume.
+- Questions should match the selected difficulty.
+- Questions should resemble real interview questions asked by {company}.
+- Do NOT provide answers.
+- Format output cleanly.
 
 Resume:
 
@@ -99,13 +133,15 @@ Resume:
 """
             )
 
-        st.subheader("Generated Questions")
+        st.subheader("📌 Generated Interview Questions")
 
         st.markdown(response.text)
 
         st.download_button(
-        label="Download Questions",
-        data=response.text,
-        file_name="interview_questions.txt",
-        mime="text/plain"
-)
+            label="⬇ Download Questions",
+            data=response.text,
+            file_name="interview_questions.txt",
+            mime="text/plain"
+        )
+
+        st.success("Questions generated successfully!")
